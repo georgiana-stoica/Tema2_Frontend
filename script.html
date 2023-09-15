@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minesweeper</title>
+</head>
+
+<body>
+    <h1>Minesweeper</h1>
+    <label for="difficulty">Select Difficulty:</label>
+    <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="expert">Expert</option>
+    </select>
+    <label for="bombProbability">Bomb Probability:</label>
+    <input type="number" id="bombProbability" value="3">
+    <label for="maxProbability">Max Probability:</label>
+    <input type="number" id="maxProbability" value="15">
+    <button onclick="minesweeperGameBootstrapper()">Start Game</button>
+
+    <label for="rowInput">Row:</label>
+    <input type="number" id="rowInput">
+    <label for="colInput">Column:</label>
+    <input type="number" id="colInput">
+    <button onclick="revealCellFromInput()">Reveal Cell</button>
+
+
+    <script>
+
+        let board = [];
+        let openedSquares = [];
+        let flaggedSquares = [];
+        let bombCount = 0;
+        let squaresLeft = 0;
+
+        let bombProbability = 3;
+        let maxProbability = 15;
+
+        function minesweeperGameBootstrapper(rowCount, colCount) {
+            let easy = {
+                'rowCount': 9,
+                'colCount': 9,
+            };
+
+            let medium = {
+                'rowCount': 16,
+                'colCount': 16,
+            };
+
+            let expert = {
+                'rowCount': 16,
+                'colCount': 30,
+            };
+
+            if (rowCount == null && colCount == null) {
+                generateBoard(easy);
+            } else {
+                generateBoard({ 'rowCount': rowCount, 'colCount': colCount });
+            }
+        }
+
+        function generateBoard(boardMetadata) {
+            squaresLeft = boardMetadata.colCount * boardMetadata.rowCount;
+            bombCount = 0;
+           
+
+            for (let i = 0; i < boardMetadata.colCount; i++) {
+                board[i] = new Array(boardMetadata.rowCount);
+                for (let j = 0; j < boardMetadata.colCount; j++) {
+                    board[i][j] = new BoardSquare(false, 0);
+                }
+            }
+
+            for (let i = 0; i < boardMetadata.colCount; i++) {
+                for (let j = 0; j < boardMetadata.rowCount; j++) {
+                    if (Math.random() * maxProbability < bombProbability) {
+                        board[i][j].hasBomb = true;
+                        bombCount++;
+                    }
+                }
+            }
+
+            for (let i = 0; i < boardMetadata.colCount; i++) {
+                for (let j = 0; j < boardMetadata.rowCount; j++) {
+                    board[i][j].bombsAround = countBombsAround(i, j, boardMetadata.rowCount, boardMetadata.colCount);
+                }
+            }
+
+        }
+
+        function countBombsAround(x, y, rows, cols) {
+            let count = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    const newX = x + i;
+                    const newY = y + j;
+                    if (newX >= 0 && newX < cols && newY >= 0 && newY < rows) {
+                        if (board[newX][newY].hasBomb) {
+                            count++;
+                        }
+                    }
+                }
+            }
+            return count;
+        }
+
+        function revealCellFromInput() {
+            const row = parseInt(document.getElementById("rowInput").value);
+            const col = parseInt(document.getElementById("colInput").value);
+
+            if (isNaN(row) || isNaN(col) || row < 0 || row >= board[0].length || col < 0 || col >= board.length) {
+                alert("Invalid coordinates.");
+                return;
+            }
+
+            revealCell(row, col);
+        }
+
+
+        function revealCell(x, y) {
+
+            if (board[x][y].isOpened || board[x][y].isFlagged) {
+                return;
+            }
+
+            if (board[x][y].hasBomb) {
+                alert("Game Over! You clicked on a bomb.");
+            } else {
+                console.log(`Number of bombs around cell (${x}, ${y}): ${board[x][y].bombsAround}`);
+
+                board[x][y].isOpened = true;
+                squaresLeft--;
+            }
+        }
+
+
+        class BoardSquare {
+            constructor(hasBomb, bombsAround, isOpened, isFlagged) {
+                this.hasBomb = hasBomb;
+                this.bombsAround = bombsAround;
+                this.isOpened = isOpened;
+                this.isFlagged = isFlagged;
+            }
+        }
+
+        minesweeperGameBootstrapper(5,5);
+    </script>
+</body>
+
+</html>
